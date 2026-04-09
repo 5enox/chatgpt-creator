@@ -1,6 +1,6 @@
 [project]
 name = "chatgpt-creator"
-version = "0.1.0"
+version = "0.2.0"
 description = "Automated ChatGPT account signup using Outlook email stock with IMAP OTP retrieval"
 readme = "README.md"
 license = "MIT"

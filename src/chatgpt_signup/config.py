@@ -1,3 +1,4 @@
+import logging
 import os
 
 BASE_URL = "https://chatgpt.com"
@@ -27,3 +28,7 @@ BROWSER_HEADERS = {
     "sec-fetch-mode": "navigate",
     "sec-fetch-site": "same-origin",
 }
+
+
+def get_logger(name: str) -> logging.Logger:
+    return logging.getLogger(f"chatgpt_signup.{name}")

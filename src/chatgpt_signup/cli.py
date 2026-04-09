@@ -1,4 +1,6 @@
 import argparse
+import asyncio
+import logging
 import random
 import string
 import sys
@@ -8,6 +10,7 @@ from faker import Faker
 
 from .config import ACCOUNTS_XLSX, CREATED_ACCOUNTS_FILE
 from .signup import signup
+from .async_signup import async_signup_batch
 from .storage import load_email_stock, save_created_account
 
 fake = Faker()
@@ -23,6 +26,28 @@ def _random_birthday() -> str:
         start_date=today - timedelta(days=49 * 365),
         end_date=today - timedelta(days=20 * 365),
     ).isoformat()
+
+
+def _prepare_accounts(selected: list[dict]) -> list[dict]:
+    """Attach generated name/password/birthday to each stock account."""
+    prepared = []
+    for acct in selected:
+        prepared.append({
+            **acct,
+            "name": f"{fake.first_name()} {fake.last_name()}",
+            "password": "SuperSecure" + _rand_str() + "!1",
+            "birthday": _random_birthday(),
+        })
+    return prepared
+
+
+def _setup_logging(verbose: bool):
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 
 def main():
@@ -43,59 +68,71 @@ def main():
         "--proxy", default=None,
         help="SOCKS5/HTTP proxy URL (overrides SIGNUP_PROXY env var)",
     )
+    parser.add_argument(
+        "--async", dest="use_async", action="store_true",
+        help="Run signups concurrently using async",
+    )
+    parser.add_argument(
+        "--max-concurrent", type=int, default=5,
+        help="Max concurrent signups in async mode (default: 5)",
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true",
+        help="Enable debug logging",
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true",
+        help="Only show errors",
+    )
     args = parser.parse_args()
 
-    print(f"[*] Loading email stock from {args.stock}...")
+    if args.quiet:
+        logging.basicConfig(level=logging.ERROR)
+    else:
+        _setup_logging(args.verbose)
+
+    log = logging.getLogger("chatgpt_signup.cli")
+
+    log.info("Loading email stock from %s", args.stock)
     stock = load_email_stock(args.stock)
     if not stock:
-        print("[!] No accounts found in stock file.")
+        log.error("No accounts found in stock file.")
         sys.exit(1)
-    print(f"  Loaded {len(stock)} account(s)")
+    log.info("Loaded %d account(s)", len(stock))
 
     if args.count > len(stock):
-        print(f"[!] Requested {args.count} but only {len(stock)} accounts available.")
+        log.error("Requested %d but only %d accounts available.", args.count, len(stock))
         sys.exit(1)
 
     selected = random.sample(stock, args.count)
-    succeeded = 0
-    failed = 0
+    prepared = _prepare_accounts(selected)
 
-    for i, acct in enumerate(selected, 1):
-        email = acct["email"]
-        first = fake.first_name()
-        last = fake.last_name()
-        name = f"{first} {last}"
-        password = "SuperSecure" + _rand_str() + "!1"
-        birthday = _random_birthday()
-
-        print(f"\n{'#' * 60}")
-        print(f"  Account {i}/{args.count}: {email}")
-        print(f"  Name: {name}  Birthday: {birthday}")
-        print(f"{'#' * 60}")
-
-        result = signup(
-            email=email,
-            password=password,
-            name=name,
-            birthday=birthday,
-            client_id=acct["client_id"],
-            refresh_token=acct["refresh_token"],
-            proxy=args.proxy,
+    if args.use_async:
+        log.info("Running %d signup(s) concurrently (max %d)", args.count, args.max_concurrent)
+        results = asyncio.run(
+            async_signup_batch(prepared, proxy=args.proxy, max_concurrent=args.max_concurrent)
         )
+        for result in results:
+            save_created_account(result, args.output)
+    else:
+        results = []
+        for i, acct in enumerate(prepared, 1):
+            log.info("Account %d/%d: %s", i, args.count, acct["email"])
+            result = signup(
+                email=acct["email"],
+                password=acct["password"],
+                name=acct["name"],
+                birthday=acct["birthday"],
+                client_id=acct["client_id"],
+                refresh_token=acct["refresh_token"],
+                proxy=args.proxy,
+            )
+            save_created_account(result, args.output)
+            results.append(result)
 
-        save_created_account(result, args.output)
-
-        if result["status"] == "success":
-            succeeded += 1
-            print(f"[+] Saved to {args.output}")
-        else:
-            failed += 1
-            print(f"[!] Signup failed: {result['error']}")
-
-    print(f"\n{'=' * 60}")
-    print(f"  Done: {succeeded} succeeded, {failed} failed")
-    print(f"  Results saved to {args.output}")
-    print(f"{'=' * 60}")
+    succeeded = sum(1 for r in results if r["status"] == "success")
+    failed = len(results) - succeeded
+    log.info("Done: %d succeeded, %d failed — saved to %s", succeeded, failed, args.output)
 
 
 if __name__ == "__main__":
