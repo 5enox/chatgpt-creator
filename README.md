@@ -55,6 +55,16 @@ uv run chatgpt-signup -n 3 --stock emails.xlsx --output results.json --proxy soc
 
 Created accounts are saved to `created_accounts.json` with email, password, name, birthday, and access token.
 
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+1. Fork the repo
+2. Create your branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m 'Add my feature'`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a Pull Request
+
 ## License
 
 [MIT](LICENSE)
