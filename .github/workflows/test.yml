@@ -50,6 +50,6 @@ jobs:
 
       - name: Verify wheel installs cleanly
         run: |
-          uv venv /tmp/test-env --python ${{ matrix.python-version }}
-          /tmp/test-env/bin/pip install dist/*.whl
+          uv venv /tmp/test-env --python ${{ matrix.python-version }} --seed
+          uv pip install dist/*.whl --python /tmp/test-env/bin/python
           /tmp/test-env/bin/python -c "from chatgpt_signup import __version__; print(f'Installed v{__version__}')"
