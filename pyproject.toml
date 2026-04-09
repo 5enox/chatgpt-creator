@@ -1,0 +1,21 @@
+[project]
+name = "chatgpt-signup"
+version = "0.1.0"
+description = "Automated ChatGPT account signup using Outlook email stock"
+requires-python = ">=3.11"
+dependencies = [
+    "curl-cffi>=0.7",
+    "faker>=28.0",
+    "openpyxl>=3.1",
+    "requests>=2.31",
+]
+
+[project.scripts]
+chatgpt-signup = "chatgpt_signup.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chatgpt_signup"]

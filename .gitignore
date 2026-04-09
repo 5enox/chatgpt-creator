@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+dist/
+*.egg-info/
+
+# Data files
+accounts.xlsx
+created_accounts.json
+saved_tokens.json
+*.db
+
+# Environment
+.env
