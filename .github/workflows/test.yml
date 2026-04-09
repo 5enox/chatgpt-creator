@@ -1,0 +1,55 @@
+name: Test Package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --python ${{ matrix.python-version }}
+
+      - name: Verify package imports
+        run: |
+          uv run python -c "
+          from chatgpt_signup import (
+              signup,
+              async_signup,
+              async_signup_batch,
+              load_email_stock,
+              save_created_account,
+              retry,
+              async_retry,
+              __version__,
+          )
+          print(f'chatgpt-creator v{__version__}')
+          print('All imports OK')
+          "
+
+      - name: Verify CLI entrypoint
+        run: uv run chatgpt-creator --help
+
+      - name: Build package
+        run: uv build
+
+      - name: Verify wheel installs cleanly
+        run: |
+          uv venv /tmp/test-env --python ${{ matrix.python-version }}
+          /tmp/test-env/bin/pip install dist/*.whl
+          /tmp/test-env/bin/python -c "from chatgpt_signup import __version__; print(f'Installed v{__version__}')"
