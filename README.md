@@ -2,13 +2,13 @@
 
 Automated ChatGPT account signup using Outlook email stock with IMAP OTP retrieval.
 
-## Requirements
+## Installation
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/)
-- Outlook email accounts in `accounts.xlsx`
+```bash
+pip install chatgpt-creator
+```
 
-## Setup
+Or install from source:
 
 ```bash
 git clone https://github.com/5enox/chatgpt-creator.git
@@ -24,23 +24,46 @@ Rows starting from row 4, column A. Each cell formatted as:
 email----password----client_id----refresh_token
 ```
 
-## Usage
+## CLI Usage
 
 ```bash
 # Create 1 account (default)
-uv run chatgpt-signup
+chatgpt-creator
 
 # Create multiple accounts
-uv run chatgpt-signup -n 5
+chatgpt-creator -n 5
 
 # Custom stock file
-uv run chatgpt-signup --stock my_emails.xlsx
+chatgpt-creator --stock my_emails.xlsx
 
 # With proxy
-uv run chatgpt-signup --proxy socks5://user:pass@host:port
+chatgpt-creator --proxy socks5://user:pass@host:port
 
 # All options
-uv run chatgpt-signup -n 3 --stock emails.xlsx --output results.json --proxy socks5://host:port
+chatgpt-creator -n 3 --stock emails.xlsx --output results.json --proxy socks5://host:port
+```
+
+## Library Usage
+
+```python
+from chatgpt_signup import signup, load_email_stock
+
+# Load accounts from xlsx
+stock = load_email_stock("accounts.xlsx")
+
+# Sign up a single account
+result = signup(
+    email=stock[0]["email"],
+    password="MyPassword123!",
+    name="John Doe",
+    birthday="1995-06-15",
+    client_id=stock[0]["client_id"],
+    refresh_token=stock[0]["refresh_token"],
+    proxy="socks5://user:pass@host:port",  # optional
+)
+
+print(result["status"])        # "success" or "failed"
+print(result["access_token"])  # ChatGPT access token
 ```
 
 ## Environment Variables

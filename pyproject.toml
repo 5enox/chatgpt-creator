@@ -1,8 +1,24 @@
 [project]
-name = "chatgpt-signup"
+name = "chatgpt-creator"
 version = "0.1.0"
-description = "Automated ChatGPT account signup using Outlook email stock"
+description = "Automated ChatGPT account signup using Outlook email stock with IMAP OTP retrieval"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
+authors = [
+    { name = "5enox", email = "animikantan@gmail.com" },
+]
+keywords = ["chatgpt", "signup", "automation", "openai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+]
 dependencies = [
     "curl-cffi>=0.7",
     "faker>=28.0",
@@ -10,8 +26,13 @@ dependencies = [
     "requests>=2.31",
 ]
 
+[project.urls]
+Homepage = "https://github.com/5enox/chatgpt-creator"
+Repository = "https://github.com/5enox/chatgpt-creator"
+Issues = "https://github.com/5enox/chatgpt-creator/issues"
+
 [project.scripts]
-chatgpt-signup = "chatgpt_signup.cli:main"
+chatgpt-creator = "chatgpt_signup.cli:main"
 
 [build-system]
 requires = ["hatchling"]

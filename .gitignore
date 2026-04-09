@@ -3,7 +3,10 @@ __pycache__/
 *.pyo
 .venv/
 dist/
+build/
 *.egg-info/
+*.tar.gz
+*.whl
 
 # Data files
 accounts.xlsx
